@@ -6,6 +6,9 @@ use App\Domains\Activity\Actions\LogActivityAction;
 use App\Domains\Column\Requests\StoreColumnRequest;
 use App\Domains\Column\Requests\UpdateColumnRequest;
 use App\Domains\Column\Resources\ColumnResource;
+use App\Events\ColumnCreated;
+use App\Events\ColumnDeleted;
+use App\Events\ColumnUpdated;
 use App\Models\Board;
 use App\Models\Column;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
@@ -27,6 +30,7 @@ class ColumnController
         ]);
 
         (new LogActivityAction())->execute($request->user(), 'column.created', $board->workspace, $board, $column->id);
+        broadcast(new ColumnCreated($column, $board->id))->toOthers();
 
         return response()->json(new ColumnResource($column), 201);
     }
@@ -37,6 +41,8 @@ class ColumnController
 
         $column->update($request->only('title', 'position'));
 
+        broadcast(new ColumnUpdated($column, $column->board_id))->toOthers();
+
         return response()->json(new ColumnResource($column));
     }
 
@@ -44,7 +50,11 @@ class ColumnController
     {
         $this->authorize('delete', $column);
 
+        $boardId = $column->board_id;
+        $columnId = $column->id;
         $column->delete();
+
+        broadcast(new ColumnDeleted($columnId, $boardId))->toOthers();
 
         return response()->json(null, 204);
     }

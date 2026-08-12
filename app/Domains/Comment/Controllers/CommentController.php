@@ -7,6 +7,7 @@ use App\Domains\Comment\Requests\StoreCommentRequest;
 use App\Domains\Comment\Requests\UpdateCommentRequest;
 use App\Domains\Comment\Resources\CommentResource;
 use App\Domains\Notification\Actions\CreateNotificationAction;
+use App\Events\CommentCreated;
 use App\Models\Card;
 use App\Models\Comment;
 use App\Models\User;
@@ -29,6 +30,7 @@ class CommentController
 
         $board = $card->column->board;
         (new LogActivityAction())->execute($request->user(), 'comment.created', $board->workspace, $board, $comment->id);
+        broadcast(new CommentCreated($comment, $board->id))->toOthers();
 
         $this->notifyMentions($comment, $card);
 

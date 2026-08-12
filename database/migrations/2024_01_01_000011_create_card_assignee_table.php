@@ -9,7 +9,6 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('card_assignee', function (Blueprint $table) {
-            $table->uuid('id')->primary();
             $table->foreignUuid('card_id')->constrained()->onDelete('cascade');
             $table->foreignUuid('user_id')->constrained()->onDelete('cascade');
             $table->timestamps();

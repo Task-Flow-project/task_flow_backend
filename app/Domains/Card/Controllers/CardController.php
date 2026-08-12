@@ -8,6 +8,9 @@ use App\Domains\Card\Requests\StoreCardRequest;
 use App\Domains\Card\Requests\UpdateCardRequest;
 use App\Domains\Card\Resources\CardResource;
 use App\Domains\Notification\Actions\CreateNotificationAction;
+use App\Events\CardCreated;
+use App\Events\CardDeleted;
+use App\Events\CardUpdated;
 use App\Models\Card;
 use App\Models\Column;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
@@ -30,6 +33,7 @@ class CardController
 
         $board = $column->board;
         (new LogActivityAction())->execute($request->user(), 'card.created', $board->workspace, $board, $card->id);
+        broadcast(new CardCreated($card, $board->id))->toOthers();
 
         return response()->json(new CardResource($card), 201);
     }
@@ -88,14 +92,22 @@ class CardController
             (new LogActivityAction())->execute($request->user(), 'card.completed', $board->workspace, $board, $card->id);
         }
 
-        return response()->json(new CardResource($card->fresh(['labels', 'assignees'])));
+        $freshCard = $card->fresh(['labels', 'assignees']);
+        $currentBoardId = $moved ? $freshCard->column->board_id : $board->id;
+        broadcast(new CardUpdated($freshCard, $currentBoardId))->toOthers();
+
+        return response()->json(new CardResource($freshCard));
     }
 
     public function destroy(Card $card): JsonResponse
     {
         $this->authorize('delete', $card);
 
+        $boardId = $card->column->board_id;
+        $cardId = $card->id;
         $card->delete();
+
+        broadcast(new CardDeleted($cardId, $boardId))->toOthers();
 
         return response()->json(null, 204);
     }
