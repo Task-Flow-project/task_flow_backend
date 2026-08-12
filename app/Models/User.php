@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Laravel\Cashier\Billable;
 use Laravel\Sanctum\HasApiTokens;
 
 #[Fillable(['name', 'username', 'email', 'password', 'avatar_url', 'bio', 'otp_code', 'otp_expires_at', 'email_verified_at'])]
@@ -19,7 +20,7 @@ use Laravel\Sanctum\HasApiTokens;
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
-    use HasApiTokens, HasFactory, HasUuids, Notifiable;
+    use Billable, HasApiTokens, HasFactory, HasUuids, Notifiable;
 
     protected function casts(): array
     {
@@ -68,10 +69,5 @@ class User extends Authenticatable
     public function notifications(): HasMany
     {
         return $this->hasMany(Notification::class);
-    }
-
-    public function subscription(): HasOne
-    {
-        return $this->hasOne(Subscription::class);
     }
 }

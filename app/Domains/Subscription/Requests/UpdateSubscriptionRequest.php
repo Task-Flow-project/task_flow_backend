@@ -14,7 +14,10 @@ class UpdateSubscriptionRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'plan' => ['required', 'string', 'in:free,pro,enterprise'],
+            // Optional: which Stripe Price to swap to. Defaults to the
+            // configured Pro price when omitted (this app currently only
+            // offers one paid tier).
+            'price' => ['sometimes', 'string', 'starts_with:price_'],
         ];
     }
 }

@@ -15,6 +15,7 @@ use App\Domains\Subscription\Controllers\SubscriptionController;
 use App\Domains\User\Controllers\UserController;
 use App\Domains\Workspace\Controllers\WorkspaceController;
 use Illuminate\Support\Facades\Route;
+use Laravel\Cashier\Http\Controllers\WebhookController;
 
 Route::middleware('throttle:auth')->group(function () {
     Route::post('/register', [AuthController::class, 'register']);
@@ -27,6 +28,10 @@ Route::middleware('throttle:auth')->group(function () {
 });
 
 Route::get('/users/{username}', [UserController::class, 'show']);
+
+// Called by Stripe, not the frontend — Cashier verifies the Stripe-Signature
+// header itself instead of going through our normal auth.
+Route::post('/stripe/webhook', [WebhookController::class, 'handleWebhook']);
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);

@@ -7,7 +7,6 @@ use App\Models\Card;
 use App\Models\Column;
 use App\Models\Invitation;
 use App\Models\Membership;
-use App\Models\Subscription;
 use App\Models\User;
 use App\Models\Workspace;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -128,7 +127,6 @@ class BackendCompletionTest extends TestCase
 
         $owner = User::factory()->create();
         $workspace = $this->makeWorkspace($owner);
-        Subscription::create(['user_id' => $owner->id, 'plan' => 'pro', 'status' => 'active']);
         $board = Board::create(['workspace_id' => $workspace->id, 'title' => 'Roadmap']);
         $column = Column::create(['board_id' => $board->id, 'title' => 'To Do', 'position' => 1000]);
 

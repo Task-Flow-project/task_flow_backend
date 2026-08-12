@@ -27,7 +27,7 @@ class PlanLimits
 
     public static function planFor(User $user): string
     {
-        return $user->subscription?->plan ?? 'free';
+        return $user->subscribed('default', config('services.stripe.price_pro')) ? 'pro' : 'free';
     }
 
     public static function workspacesAllowed(User $user): ?int
