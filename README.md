@@ -138,10 +138,3 @@ A Postman collection with every endpoint, organized by domain, with saved reques
 
 Auth-sensitive routes (`/register`, `/login`, `/verify-otp`, `/resend-otp`) are rate-limited to 6 requests/minute per IP.
 
-## Frontend
-
-This repository is the API only. The frontend is a separately-maintained, hand-written Next.js application and is not part of this repo.
-
-## License
-
-Proprietary — internal project.
