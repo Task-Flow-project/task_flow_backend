@@ -1,6 +1,6 @@
 # TaskFlow — Backend API
 
-TaskFlow is a real-time collaborative Kanban task board (Trello/Notion-style) built as a full production-style SaaS. This repository is the **backend**: a Laravel 13 REST API consumed by a separately-maintained Next.js frontend.
+TaskFlow is a real-time collaborative Kanban task board (Trello/Notion-style) built as a full production-style SaaS. This repository is the **backend**: a standalone Laravel 13 REST API.
 
 Teams create **workspaces**, invite members with roles, organize work on **boards** made of **columns** and **cards**, collaborate live, and get gamified with streaks and achievements. Free and Pro plans are enforced server-side and billed through Stripe.
 
@@ -134,13 +134,11 @@ The suite includes feature tests for authorization boundaries, plan-limit enforc
 
 ## API Reference
 
-A Postman collection with every endpoint, organized by domain, with saved request/response examples for every success and error case, is available separately (ask the maintainer for the latest export). Base URL: `http://localhost/api`. Authentication: `Authorization: Bearer <token>` (obtained from `/register` → `/verify-otp` or `/login`), or the `taskflow_token` cookie for same-origin requests.
+Full API documentation, with every endpoint and request/response examples: **[taskflow.docs.buildwithfern.com/task-flow](https://taskflow.docs.buildwithfern.com/task-flow)**
+
+Base URL: `http://localhost/api`. Authentication: `Authorization: Bearer <token>` (obtained from `/register` → `/verify-otp` or `/login`), or the `taskflow_token` cookie for same-origin requests.
 
 Auth-sensitive routes (`/register`, `/login`, `/verify-otp`, `/resend-otp`) are rate-limited to 6 requests/minute per IP.
-
-## Frontend
-
-This repository is the API only. The frontend is a separately-maintained, hand-written Next.js application and is not part of this repo.
 
 ## License
 
