@@ -139,7 +139,3 @@ Full API documentation, with every endpoint and request/response examples: **[ta
 Base URL: `http://localhost/api`. Authentication: `Authorization: Bearer <token>` (obtained from `/register` → `/verify-otp` or `/login`), or the `taskflow_token` cookie for same-origin requests.
 
 Auth-sensitive routes (`/register`, `/login`, `/verify-otp`, `/resend-otp`) are rate-limited to 6 requests/minute per IP.
-
-## License
-
-Proprietary — internal project.
