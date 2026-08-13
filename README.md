@@ -1,58 +1,147 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# TaskFlow — Backend API
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+TaskFlow is a real-time collaborative Kanban task board (Trello/Notion-style) built as a full production-style SaaS. This repository is the **backend**: a Laravel 13 REST API consumed by a separately-maintained Next.js frontend.
 
-## About Laravel
+Teams create **workspaces**, invite members with roles, organize work on **boards** made of **columns** and **cards**, collaborate live, and get gamified with streaks and achievements. Free and Pro plans are enforced server-side and billed through Stripe.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## Features
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+- **Auth** — email/password with OTP email verification, Google OAuth, Sanctum token + httpOnly cookie hybrid auth
+- **Workspaces & teams** — roles (owner/admin/member), email invitations, ownership transfer
+- **Kanban boards** — boards → columns → cards, drag-and-drop ordering via a float gap-strategy `position`
+- **Card details** — labels, assignees, due dates, checklists, comments with `@mention`, file attachments
+- **Real-time collaboration** — board mutations and notifications pushed live over WebSockets (Laravel Reverb)
+- **Gamification** — per-user activity log, daily streaks (with grace-day rule), unlockable achievements
+- **Notifications** — assignment, mention, invite, achievement unlock, due-soon reminders (scheduled)
+- **Billing** — Free/Pro plans with server-enforced limits (workspaces, boards, members, attachment storage, activity history), real Stripe subscriptions via Laravel Cashier
+- **Search** — scoped to the caller's own workspaces, never cross-tenant
+- **Profile & security** — avatar upload, password change, active session management, account deletion
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+## Tech Stack
 
-## Learning Laravel
+| Layer | Technology |
+|---|---|
+| Framework | Laravel 13, PHP 8.4 |
+| Auth | Laravel Sanctum, Laravel Socialite (Google) |
+| Database | MySQL 8.4 |
+| Cache / Queue | Redis |
+| Real-time | Laravel Reverb (self-hosted WebSocket server, Pusher protocol) |
+| Billing | Laravel Cashier + Stripe |
+| Mail | SMTP |
+| Local environment | Docker (Laravel Sail) |
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+## Architecture
 
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+The codebase is organized by **domain** rather than by technical layer:
 
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
-
-## Agentic Development
-
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
-
-```bash
-composer require laravel/boost --dev
-
-php artisan boost:install
+```
+app/Domains/{Domain}/
+  Controllers/   HTTP entry points
+  Actions/       reusable business logic (e.g. LogActivityAction, MoveCardAction)
+  Requests/      Form Request validation
+  Resources/     JSON response shaping
+  Policies/      authorization rules, registered in AppServiceProvider
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+Domains: `Auth`, `User`, `Workspace`, `Invitation`, `Membership`, `Board`, `Column`, `Card`, `Label`, `Comment`, `Checklist`, `Attachment`, `Achievement`, `Activity`, `Notification`, `Search`, `Subscription`.
 
-## Contributing
+Cross-cutting pieces live outside `Domains/`:
+- `app/Events/` — broadcast events (`ShouldBroadcastNow`) for real-time updates
+- `app/Models/` — Eloquent models (UUID primary keys throughout)
+- `routes/channels.php` — WebSocket channel authorization
+- `app/Domains/Subscription/Support/PlanLimits.php` — the single source of truth for Free/Pro limits
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+## Getting Started
 
-## Code of Conduct
+### Prerequisites
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+- Docker Desktop (with WSL2 integration on Windows)
+- A [Stripe](https://stripe.com) account in **test mode** (free, no card required) if you want billing to work end-to-end
+- The [Stripe CLI](https://stripe.com/docs/stripe-cli) if you want to receive webhooks locally
 
-## Security Vulnerabilities
+> The project requires **PHP ≥ 8.4.1**. It will not run on an older system PHP — always run it through Docker.
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+### Setup
+
+```bash
+git clone https://github.com/Task-Flow-project/task_flow_backend.git
+cd task_flow_backend
+cp .env.example .env
+```
+
+Fill in `.env` with, at minimum:
+
+```
+DB_CONNECTION=mysql
+DB_HOST=mysql
+DB_DATABASE=taskflow
+DB_USERNAME=sail
+DB_PASSWORD=password
+
+REDIS_HOST=redis
+
+MAIL_MAILER=smtp
+MAIL_HOST=smtp.gmail.com
+MAIL_PORT=587
+MAIL_USERNAME=your@gmail.com
+MAIL_PASSWORD=your-gmail-app-password   # not your regular password — see Google Account > App Passwords
+
+GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET=
+GOOGLE_REDIRECT_URI=http://localhost/api/auth/google/callback
+
+REVERB_APP_ID=
+REVERB_APP_KEY=
+REVERB_APP_SECRET=
+REVERB_HOST=localhost
+REVERB_PORT=8080
+REVERB_SCHEME=http
+
+STRIPE_KEY=pk_test_...
+STRIPE_SECRET=sk_test_...
+STRIPE_PRICE_PRO=price_...
+STRIPE_WEBHOOK_SECRET=whsec_...
+```
+
+`REVERB_APP_ID/KEY/SECRET` can be any random strings you generate yourself (e.g. `openssl rand -hex 16`) — they're only shared between this app and its own Reverb server, not a third-party service.
+
+Then:
+
+```bash
+docker compose up -d --build
+docker compose exec laravel.test composer install
+docker compose exec laravel.test php artisan key:generate
+docker compose exec laravel.test php artisan migrate --seed
+```
+
+The API is now available at `http://localhost/api`, and the Reverb WebSocket server at `ws://localhost:8080`.
+
+### Receiving Stripe webhooks locally
+
+```bash
+stripe listen --forward-to localhost/api/stripe/webhook --api-key sk_test_...
+```
+
+This prints a `whsec_...` value — put it in `.env` as `STRIPE_WEBHOOK_SECRET` and re-run `php artisan config:clear`.
+
+## Running Tests
+
+```bash
+docker compose exec laravel.test php artisan test
+```
+
+The suite includes feature tests for authorization boundaries, plan-limit enforcement, the achievement/streak engine, real-time broadcast events (`Event::fake()`), and a live end-to-end billing test against Stripe test mode (using Stripe's documented `pm_card_visa` test payment method — no real card involved).
+
+## API Reference
+
+A Postman collection with every endpoint, organized by domain, with saved request/response examples for every success and error case, is available separately (ask the maintainer for the latest export). Base URL: `http://localhost/api`. Authentication: `Authorization: Bearer <token>` (obtained from `/register` → `/verify-otp` or `/login`), or the `taskflow_token` cookie for same-origin requests.
+
+Auth-sensitive routes (`/register`, `/login`, `/verify-otp`, `/resend-otp`) are rate-limited to 6 requests/minute per IP.
+
+## Frontend
+
+This repository is the API only. The frontend is a separately-maintained, hand-written Next.js application and is not part of this repo.
 
 ## License
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+Proprietary — internal project.
