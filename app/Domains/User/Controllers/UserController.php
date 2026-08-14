@@ -108,14 +108,14 @@ class UserController
 
     public function settings(Request $request): JsonResponse
     {
-        $settings = $request->user()->settings ?? UserSetting::create(['user_id' => $request->user()->id]);
+        $settings = $request->user()->settings ?? UserSetting::create(['user_id' => $request->user()->id])->fresh();
 
         return response()->json($settings);
     }
 
     public function updateSettings(UpdateSettingsRequest $request): JsonResponse
     {
-        $settings = $request->user()->settings ?? UserSetting::create(['user_id' => $request->user()->id]);
+        $settings = $request->user()->settings ?? UserSetting::create(['user_id' => $request->user()->id])->fresh();
         $settings->update($request->only('theme', 'language', 'notification_prefs'));
 
         return response()->json($settings);
