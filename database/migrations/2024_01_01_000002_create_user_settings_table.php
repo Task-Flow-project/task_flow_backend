@@ -13,7 +13,7 @@ return new class extends Migration
             $table->foreignUuid('user_id')->constrained()->onDelete('cascade');
             $table->string('theme')->default('system');
             $table->string('language')->default('en');
-            $table->json('notification_prefs');
+            $table->json('notification_prefs')->default(json_encode(['email' => true, 'in_app' => true]));
             $table->timestamps();
         });
     }
