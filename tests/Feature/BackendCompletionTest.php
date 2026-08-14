@@ -62,6 +62,22 @@ class BackendCompletionTest extends TestCase
         $this->actingAs($user)->getJson('/api/me/invoices')->assertOk()->assertJson(['data' => []]);
     }
 
+    public function test_creating_a_workspace_via_the_real_endpoint_succeeds(): void
+    {
+        $owner = User::factory()->create();
+
+        $response = $this->actingAs($owner)
+            ->postJson('/api/workspaces', ['name' => 'Acme Inc'])
+            ->assertCreated();
+
+        $this->assertSame('Acme Inc', $response->json('name'));
+        $this->assertDatabaseHas('memberships', [
+            'workspace_id' => $response->json('id'),
+            'user_id' => $owner->id,
+            'role' => 'owner',
+        ]);
+    }
+
     public function test_workspace_plan_limit_blocks_second_free_workspace(): void
     {
         $owner = User::factory()->create();

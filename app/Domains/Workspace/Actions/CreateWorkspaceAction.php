@@ -7,7 +7,7 @@ use App\Models\Membership;
 
 class CreateWorkspaceAction
 {
-    public function execute(string $name, int $ownerId): Workspace
+    public function execute(string $name, string $ownerId): Workspace
     {
         $workspace = Workspace::create([
             'name' => $name,

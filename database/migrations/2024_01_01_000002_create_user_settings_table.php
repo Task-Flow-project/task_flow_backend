@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Query\Expression;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
@@ -13,7 +14,8 @@ return new class extends Migration
             $table->foreignUuid('user_id')->constrained()->onDelete('cascade');
             $table->string('theme')->default('system');
             $table->string('language')->default('en');
-            $table->json('notification_prefs')->default(json_encode(['email' => true, 'in_app' => true]));
+            // MySQL rejects a literal default on JSON/TEXT/BLOB columns — must be an expression.
+            $table->json('notification_prefs')->default(new Expression("(JSON_OBJECT('email', true, 'in_app', true))"));
             $table->timestamps();
         });
     }
